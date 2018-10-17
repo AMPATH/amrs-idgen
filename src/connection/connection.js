@@ -16,14 +16,12 @@ function executeQuery(query) {
             if(err) {
                 connection.release();
                 reject(err);
-                return;
             }
             connection.query(query, (err, rows) => {
-                connection.release();
                 if (!err) {
                     resolve(rows);
-                    return;
                 }
+                connection.release();
             });
         });
     });

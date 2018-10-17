@@ -1,7 +1,6 @@
 'use strict';
 
 const connection = require('../connection/connection');
-const Promise = require('bluebird');
 
 var identiferService = {
     checkNumber: checkNumber,
@@ -29,8 +28,7 @@ function checkNumber(randNumber) {
 }
 
 function checkIdentifier(identifier) {
-
-    var query = 'SELECT * FROM idgen_log_entry where identifier='+ identifier;
+    var query = 'SELECT * FROM idgen_log_entry where identifier="' + identifier + '"';
     return connection.executeQuery(query)
     .then((results) => {
         if (results[0]) {
@@ -39,15 +37,16 @@ function checkIdentifier(identifier) {
             return false;
         }
     }).catch((err) => {
+        console.log(err);
         throw err;
     });
 
 }
 
-function updateLogEntry(identifier, user) {
+function updateLogEntry(identifier, user, source) {
     var user = user;
     var identifier = identifier;
-    var source = 1;
+    var source = source;
     var date = new Date().toISOString().slice(0, 19).replace('T', ' ');
     
     var query = 'INSERT INTO idgen_log_entry (source, identifier, date_generated, generated_by) ' +

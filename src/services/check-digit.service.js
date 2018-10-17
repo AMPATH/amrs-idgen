@@ -1,18 +1,20 @@
 'use strict';
 const Promise = require('bluebird');
-const services = require('./services');
 const dao = require('../dao/dao');
+var Encoder = require("code-128-encoder");
+var encoder= new Encoder();
 
 const checkDigitServices = {
     getDigit: returnDigit,
     getMultiple: returnMultiple,
-    saveIdentifier: saveIdentifier
+    saveIdentifier: saveIdentifier,
+    getZuriIds: getZuriIds,
+    encodeZuriIds: encodeZuriIds
 };
 
 module.exports = checkDigitServices;
 
 var possible = '012346789';
-var digits = [];
     
 function randomString(length) {
     var text = '';
@@ -68,7 +70,7 @@ function returnDigit(user) {
                 if (success) {
                     return '';
                 } else {
-                    saveIdentifier(digit, user);
+                    saveIdentifier(digit, user, 1);
                     return digit;
                 }
             });
@@ -101,10 +103,79 @@ function returnMultiple(user, number) {
     return response;
 }
 
-function saveIdentifier(digit, user) {
-    return dao.identiferService.updateLogEntry(digit, user).then((result) => {
+function createZuri(user) {
+
+    var randNumber = randomString(9);
+    var luhnDigit;
+    var digit;
+
+    return dao.identiferService.checkNumber(randNumber).then((result) => {
+        if (result) {
+            return null;
+        } else {
+
+            luhnDigit = luhnCheckDigit(randNumber); 
+            let generated = randNumber.match(/.{1,3}/g).join("-");
+            digit = 'ZH-' + generated + '-' + luhnDigit;
+            
+            return dao.identiferService.checkIdentifier(digit)
+            .then((success) => {
+                if (success) {
+                    return '';
+                } else {
+                    saveIdentifier(digit, user, 8);
+                    return digit;
+                }
+            }, (err) => {
+                throw err;
+            });
+
+        }
+    });
+    
+}
+
+function getZuriIds(user, number) {
+    var arr = [];
+    var response = new Promise((resolve) => {
+        for (var i = 0; i < number; i ++) {
+            var resName = new Promise((resolve, reject) => {
+                createZuri(user).then((data) => {
+                    do {
+                        resolve(data);
+                        break;
+                    } while (data !== null);
+                }).catch((err) => {
+                    reject(err);
+                });
+            });
+            arr.push(resName);
+        }
+        
+        Promise.all(arr).then((values) => {
+            resolve(values);
+        });
+    });
+    return response;
+
+}
+
+function saveIdentifier(digit, user, source) {
+    return dao.identiferService.updateLogEntry(digit, user, source).then((result) => {
         if (result) {
             return result;
         }
     });
+}
+
+function encodeZuriIds(identifiers) {
+
+    let encoded = [];
+
+    identifiers.forEach((identifier, key) => {
+        let arr = [identifiers[key], encoder.encode(identifier)]
+        encoded.push(arr);
+    });
+
+    return encoded;
 }

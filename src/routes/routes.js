@@ -47,7 +47,6 @@ module.exports = function() {
 				
                             if (res.success) {
                                 var encrypted = services.encryptPDF.encrypt(res.fileName, password);
-				console.log(encrypted);
                                 if (encrypted) {
                                     var fileNa = path.join(__dirname, '../services/files/out-' + res.fileName);
                                     reply.file(fileNa);
@@ -63,6 +62,23 @@ module.exports = function() {
                                 }
                             }
                         });  
+                    }
+                });           
+            }
+        },
+        {
+            method: 'POST',
+            path: '/generatezuri',
+            handler: (request, reply) => {
+
+                var user = request.payload.user;
+                var number = request.payload.number;
+                
+                services.checkDigitServices.getZuriIds(user, number).then((data) => {
+
+                    if (data.length === number) {
+                        let ids = services.checkDigitServices.encodeZuriIds(data);
+                        reply(ids); 
                     }
                 });           
             }

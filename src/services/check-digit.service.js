@@ -3,6 +3,7 @@ const Promise = require('bluebird');
 const dao = require('../dao/dao');
 var Encoder = require("code-128-encoder");
 var encoder= new Encoder();
+var _ = require('lodash');
 
 const checkDigitServices = {
     getDigit: returnDigit,
@@ -144,7 +145,7 @@ function getZuriIds(user, number) {
                     do {
                         resolve(data);
                         break;
-                    } while (data !== null);
+                    } while (data !== null || data );
                 }).catch((err) => {
                     reject(err);
                 });
@@ -171,11 +172,18 @@ function saveIdentifier(digit, user, source) {
 function encodeZuriIds(identifiers) {
 
     let encoded = [];
+    identifiers = _.remove(identifiers, (n) => {
+        return n !== null;
+    });
 
     identifiers.forEach((identifier, key) => {
-        let arr = [identifiers[key], encoder.encode(identifier)]
+        let arr = [];
+        arr[0] = identifiers[key]
+        arr[1] = encoder.encode(identifier)
         encoded.push(arr);
     });
 
     return encoded;
+
+    
 }

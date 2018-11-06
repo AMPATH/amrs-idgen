@@ -76,7 +76,7 @@ module.exports = function() {
                 
                 services.checkDigitServices.getZuriIds(user, number).then((data) => {
 
-                    if (data.length === number) {
+                    if (data.length) {
                         let ids = services.checkDigitServices.encodeZuriIds(data);
                         reply(ids); 
                     }

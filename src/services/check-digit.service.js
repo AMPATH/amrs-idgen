@@ -116,7 +116,7 @@ function createZuri(user) {
         } else {
 
             luhnDigit = luhnCheckDigit(randNumber); 
-            let generated = randNumber.match(/.{1,3}/g).join("-");
+            let generated = randNumber.match(/.{1,4}/g).join("-");
             digit = 'ZH-' + generated + '-' + luhnDigit;
             
             return dao.identiferService.checkIdentifier(digit)

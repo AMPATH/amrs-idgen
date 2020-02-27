@@ -7,10 +7,21 @@ const def = require('./src/connection/connection');
 const tls = require('tls');
 const fs = require('fs');
 const Inert = require('inert');
+const moment = require('moment');
 
 var routes = require('./src/routes/routes');
 
 const server = new Hapi.Server();
+
+server.on('response', function (request) {
+        if (request.response === undefined || request.response === null) {
+          console.log("No response");
+        } else {
+          console.log(
+            moment().local().format("YYYY-MM-DD HH:mm:ss") + ': ' + server.info.uri + ': ' + request.method.toUpperCase() + ' ' + request.url.path + ' \n ' + request.response.statusCode
+          );
+          
+}});
 
 var tls_config = false;
 

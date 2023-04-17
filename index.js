@@ -7,48 +7,61 @@ const def = require('./src/connection/connection');
 const tls = require('tls');
 const fs = require('fs');
 const Inert = require('inert');
+const rp = require('request-promise');
+
+const validate = async (request, username, password) => {
+        var uri = '';
+        if(request.query.test) {
+            uri = config.amrs.test_url;
+        } else {
+            uri = config.amrs.prod_url;
+        }
+        var options = {
+                uri: uri,
+                headers: {
+                    'Authorization':  'Basic ' + Buffer.from(`${username}:${password}`).toString('base64')
+                },
+                json: true // Automatically parses the JSON string in the response
+            };
+             
+
+        // TODO: set up auth
+        // let req = await rp(options).catch((err) => console.log(err));
+        let req = {authenticated: true, user: {uuid: 1, username: 'user'}}
+        let isValid = req['authenticated'];
+        let credentials = {id: req['user']['uuid'], name: req['user']['username']};
+        return { isValid, credentials};
+        
+    };
 
 var routes = require('./src/routes/routes');
 
-const server = new Hapi.Server();
-
 var tls_config = false;
+
+const server = new Hapi.server({
+        port: config.application.port,
+        tls: tls_config
+});
 
 if (config.application.tls) {
     tls_config = tls.createServer({
         key: fs.readFileSync(config.application.key),
         cert: fs.readFileSync(config.application.cert)
     });
-}
+};
 
-server.connection({
-        port: config.application.port,
-        host: config.application.host,
-        tls: tls_config
-});
+const start = async () => {
+        
+        await server.register(Inert);
+        await server.register(require('hapi-auth-basic'));
+        server.auth.strategy('simple', 'basic', {validate});
+        server.auth.default('simple');
 
-for (var route in routes) {
-        server.route(routes[route]);
-}
-
-/* server.start((err) => {
-
-         if (err) {
-                 throw err;
-         }
-         console.log(`Server running at: ${server.info.uri}`);
-});*/
-server.register(Inert, (error) => {
-        if (error) {
-                throw error;
-        } else {
-                server.start((error) => {
-                        if (error) {
-                                throw error;
-                        }
-                        else {
-                                console.log(`Server running at: ${server.info.uri}`);
-                        }
-                });
+        for (var route in routes) {
+                server.route(routes[route]);
         }
-});
+        await server.start();
+        console.log('server running at: ' + server.info.uri);
+}
+
+start();

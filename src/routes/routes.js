@@ -113,6 +113,7 @@ module.exports = function() {
                 } else {
                     throw 'Illegal Argument Exception: location cannot be empty.';
                 }
+               
             }
         }
 
